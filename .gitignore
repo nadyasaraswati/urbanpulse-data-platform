@@ -17,8 +17,8 @@ airflow_logs/
 data/bronze/
 data/logs/
 data/locks/
-data/silver_*.csv
-data/gold_*.csv
+# data/silver_*.csv
+# data/gold_*.csv
 data/raw.csv
 
 # Exports (generated)
@@ -41,3 +41,5 @@ UrbanPulse/data/
 # OS
 .DS_Store
 Thumbs.db
+
+.gitignore
