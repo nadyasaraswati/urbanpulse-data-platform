@@ -1,4 +1,0 @@
-expression DataFolder = "C:\UrbanPulse\data\" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
-	lineageTag: e3c8d035-7423-418c-a073-280d8c54f708
-
-	annotation PBI_ResultType = Text

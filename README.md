@@ -30,17 +30,19 @@ APIs (Traffic + Weather)
 urbanpulse/
 ├── dags/                    # Airflow DAGs
 ├── src/
-│   ├── ingestion/           # Traffic & weather ingestors
+│   ├── ingestion/           # Traffic & weather ingestors + backfill
 │   ├── silver/              # Silver layer transforms
 │   ├── gold/                # Gold layer aggregations
+│   ├── export_csv.py        # Export DB → CSV
 │   └── quality_checks.py    # Data quality checks
 ├── sql/                     # DDL schemas
 ├── config/
 │   └── locations.csv        # Road locations config
 ├── notebooks/               # EDA
-├── UrbanPulse/              # Power BI PBIP project
-├── urbanpulse_powerbi/      # Power BI assets (DAX, M query)
-├── urbanpulse_streamlit/    # Streamlit dashboard
+├── exports/                 # CSV & PDF exports (gitignored)
+├── app.py                   # Streamlit dashboard
+├── UrbanPulse.pbix          # Power BI file
+├── requirements.txt
 ├── docker-compose.yml
 ├── docker-compose.airflow.yml
 └── Dockerfile.airflow
@@ -83,12 +85,11 @@ Enable DAGs in order:
 ### 4. Streamlit dashboard
 
 ```bash
-cd urbanpulse_streamlit
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Place CSV exports in `urbanpulse_streamlit/data/`:
+Place CSV exports in `data/`:
 - `gold_dim_location.csv`
 - `gold_weather_traffic_hourly.csv`
 - `silver_traffic_30min.csv`
@@ -96,7 +97,7 @@ Place CSV exports in `urbanpulse_streamlit/data/`:
 
 ### 5. Power BI
 
-Open `UrbanPulse/UrbanPulse.pbip` in Power BI Desktop, or follow the manual build guide in [`UrbanPulse/README_PowerBI.md`](UrbanPulse/README_PowerBI.md).
+Open `UrbanPulse.pbix` in Power BI Desktop.
 
 ## Data
 
