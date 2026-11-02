@@ -71,8 +71,6 @@ docker compose -f docker-compose.yml up -d          # PostgreSQL
 docker compose -f docker-compose.airflow.yml up -d  # Airflow
 ```
 
-Airflow UI: http://localhost:8080
-
 ### 3. Run pipeline
 
 Enable DAGs in order:
