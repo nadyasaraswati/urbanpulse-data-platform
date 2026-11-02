@@ -1,0 +1,67 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "p6_txt",
+  "position": {
+    "x": 10,
+    "y": 10,
+    "z": 1,
+    "height": 420,
+    "width": 1260,
+    "tabOrder": 1
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Cakupan dan batasan data",
+                    "textStyle": {
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Traffic ±20 jam (31 Okt 21:00 – 1 Nov 16:30), seluruhnya akhir pekan; tidak ada hujan pada periode traffic. Tiap jam hanya muncul sekali. Tiga observasi awal tiap ruas berjarak 1 jam, setelahnya 30 menit. Cuaca: 1 Okt – 1 Nov 2026; 20 jam terakhir bermode live. Sumber API cuaca belum dikonfirmasi (diduga reanalysis ERA5)."
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Definisi",
+                    "textStyle": {
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Congestion ratio = max(0, 1 − current_speed / free_flow_speed). Porsi macet = porsi ruas-jam dengan congestion ratio > 0 (bukan ambang macet yang divalidasi). CV = std / rata-rata kecepatan per ruas."
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Lonjakan (cong_spike) = Z-score per ruas > 3 DAN di atas fence IQR per ruas (Q3 + 1,5·IQR). Anomali kecepatan = abs(Z-score global) > 3. Flag dihitung di Python pada seluruh data dan tidak berubah saat slicer dipakai."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

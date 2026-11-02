@@ -1,0 +1,183 @@
+// ============================================================================
+// UrbanPulse — DAX measures
+//
+// Buat tabel kosong untuk menampung measure:
+//   Home > Enter data > beri nama "_Measures" > Load
+// Lalu: Table tools > New measure, tempel satu per satu (nama = teks sebelum "=").
+// Format yang disarankan ada di komentar "// fmt:".
+// Anomali (Z-score, IQR) TIDAK dihitung di DAX; kolom flag berasal dari
+// silver_traffic_enriched.csv (Python) agar identik dengan notebook dan Streamlit.
+// ============================================================================
+
+
+// ───────────── KPI traffic (gold, per jam) ─────────────
+
+Avg Congestion = AVERAGE ( fact_traffic_hourly[avg_congestion_ratio] )
+// fmt: 0.000
+
+Max Congestion = MAX ( fact_traffic_hourly[max_congestion_ratio] )
+// fmt: 0.000
+
+Avg Speed = AVERAGE ( fact_traffic_hourly[avg_speed] )
+// fmt: 0.0
+
+Road-Hours = COUNTROWS ( fact_traffic_hourly )
+// fmt: #,0
+
+Observed Hours = DISTINCTCOUNT ( fact_traffic_hourly[hour_ts] )
+// fmt: #,0
+
+Congested Share =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( fact_traffic_hourly ), fact_traffic_hourly[avg_congestion_ratio] > 0 ),
+    [Road-Hours]
+)
+// fmt: 0.0%  (porsi ruas-jam dengan congestion ratio > 0; BUKAN ambang "macet" yang divalidasi)
+
+Zero Share =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( fact_traffic_hourly ), fact_traffic_hourly[avg_congestion_ratio] = 0 ),
+    [Road-Hours]
+)
+// fmt: 0.0%
+
+Congestion Std =
+IF ( [Road-Hours] > 1, STDEV.S ( fact_traffic_hourly[avg_congestion_ratio] ) )
+// fmt: 0.000
+
+Congestion Median = MEDIAN ( fact_traffic_hourly[avg_congestion_ratio] )
+// fmt: 0.000
+
+Congestion P90 = PERCENTILE.INC ( fact_traffic_hourly[avg_congestion_ratio], 0.9 )
+// fmt: 0.000
+
+Speed Std =
+IF ( [Road-Hours] > 1, STDEV.S ( fact_traffic_hourly[avg_speed] ) )
+// fmt: 0.00
+
+Speed CV = DIVIDE ( [Speed Std], [Avg Speed] )
+// fmt: 0.000   (coefficient of variation; lebih kecil = lebih stabil)
+
+
+// ───────────── Ranking & ruas teratas ─────────────
+
+Rank Congestion =
+RANKX ( ALLSELECTED ( dim_location[location_name] ), [Avg Congestion], , DESC, Dense )
+
+Rank Stability =
+RANKX ( ALLSELECTED ( dim_location[location_name] ), [Speed CV], , ASC, Dense )
+
+Top Congested Road =
+VAR T = TOPN ( 1, ALLSELECTED ( dim_location[location_name] ), [Avg Congestion], DESC )
+RETURN CONCATENATEX ( T, dim_location[location_name], ", " )
+
+Most Stable Road =
+VAR Valid = FILTER ( ALLSELECTED ( dim_location[location_name] ), NOT ISBLANK ( [Speed CV] ) )
+VAR T = TOPN ( 1, Valid, [Speed CV], ASC )
+RETURN CONCATENATEX ( T, dim_location[location_name], ", " )
+// Jika beberapa ruas imbang (CV = 0), semuanya ditampilkan.
+
+Peak Hour =
+VAR H = ADDCOLUMNS ( VALUES ( fact_traffic_hourly[hour_of_day] ), "@Cong", [Avg Congestion] )
+VAR Top1 = TOPN ( 1, H, [@Cong], DESC )
+RETURN MINX ( Top1, fact_traffic_hourly[hour_of_day] )
+
+Peak Hour Label =
+IF ( ISBLANK ( [Peak Hour] ), BLANK (), FORMAT ( [Peak Hour], "00" ) & ":00" )
+
+
+// ───────────── Silver 30 menit: tren, korelasi, anomali ─────────────
+
+Slots = COUNTROWS ( fact_traffic_30min )
+// fmt: #,0
+
+Avg Congestion 30m = AVERAGE ( fact_traffic_30min[congestion_ratio] )
+// fmt: 0.000
+
+Avg Speed 30m = AVERAGE ( fact_traffic_30min[current_speed] )
+// fmt: 0.0
+
+Congestion MA (±30 min) =
+VAR Cur = MAX ( fact_traffic_30min[slot] )
+RETURN
+    CALCULATE (
+        [Avg Congestion 30m],
+        FILTER (
+            ALL ( fact_traffic_30min[slot] ),
+            fact_traffic_30min[slot] >= Cur - 1 / 48 && fact_traffic_30min[slot] <= Cur + 1 / 48
+        )
+    )
+// fmt: 0.000   (rata-rata bergerak berbasis waktu ±30 menit; beda tipis dengan rolling 3 slot berbasis urutan di notebook)
+
+Speed MA (±30 min) =
+VAR Cur = MAX ( fact_traffic_30min[slot] )
+RETURN
+    CALCULATE (
+        [Avg Speed 30m],
+        FILTER (
+            ALL ( fact_traffic_30min[slot] ),
+            fact_traffic_30min[slot] >= Cur - 1 / 48 && fact_traffic_30min[slot] <= Cur + 1 / 48
+        )
+    )
+// fmt: 0.0
+
+Speed vs Travel Time (r) =
+VAR N   = COUNTROWS ( fact_traffic_30min )
+VAR Sx  = SUMX ( fact_traffic_30min, fact_traffic_30min[current_speed] )
+VAR Sy  = SUMX ( fact_traffic_30min, fact_traffic_30min[current_travel_time] )
+VAR Sxy = SUMX ( fact_traffic_30min, fact_traffic_30min[current_speed] * fact_traffic_30min[current_travel_time] )
+VAR Sxx = SUMX ( fact_traffic_30min, fact_traffic_30min[current_speed] ^ 2 )
+VAR Syy = SUMX ( fact_traffic_30min, fact_traffic_30min[current_travel_time] ^ 2 )
+VAR Num = N * Sxy - Sx * Sy
+VAR Den = SQRT ( MAX ( 0, ( N * Sxx - Sx ^ 2 ) * ( N * Syy - Sy ^ 2 ) ) )
+RETURN IF ( N >= 3, DIVIDE ( Num, Den ) )
+// fmt: 0.000   (Pearson; pada tabel per ruas = korelasi dalam ruas; BLANK jika tidak ada variasi)
+
+Spikes = SUM ( fact_traffic_30min[cong_spike] )
+// fmt: #,0   (lolos Z-score > 3 DAN IQR; flag dari Python)
+
+Spike Share = DIVIDE ( [Spikes], [Slots] )
+// fmt: 0.0%
+
+Z Anomalies = SUM ( fact_traffic_30min[cong_anom_z] )
+
+IQR Anomalies = SUM ( fact_traffic_30min[cong_anom_iqr] )
+
+Speed Anomalies = SUM ( fact_traffic_30min[speed_anomaly] )
+// fmt: #,0   (|Z-score global| > 3)
+
+
+// ───────────── Cuaca (kota, per jam) ─────────────
+
+Weather Hours = COUNTROWS ( fact_weather_hourly )
+
+Avg Temp = AVERAGE ( fact_weather_hourly[temperature] )
+// fmt: 0.0
+
+Max Rain = MAX ( fact_weather_hourly[precip_max] )
+// fmt: 0.0
+
+Rain Hours = CALCULATE ( COUNTROWS ( fact_weather_hourly ), fact_weather_hourly[is_rain] = 1 )
+// fmt: #,0   (jam dengan hujan terukur di >= 1 ruas, precip_max > 0)
+
+Rain Days = SUMX ( VALUES ( dim_hour[date] ), IF ( [Rain Hours] > 0, 1, 0 ) )
+
+Live Hours = SUM ( fact_weather_hourly[is_live] )
+
+Rain Rows in Traffic Period =
+CALCULATE ( COUNTROWS ( fact_traffic_hourly ), fact_traffic_hourly[precipitation] > 0 )
+// Bukti batasan data: harus 0.
+
+
+// ───────────── Teks dinamis (card / subtitle) ─────────────
+
+Traffic Period =
+FORMAT ( MIN ( fact_traffic_30min[slot] ), "dd mmm yyyy HH:mm" ) & " – "
+    & FORMAT ( MAX ( fact_traffic_30min[slot] ), "dd mmm yyyy HH:mm" ) & " WIB"
+
+Weekend Share =
+DIVIDE (
+    COUNTROWS ( FILTER ( fact_traffic_hourly, WEEKDAY ( fact_traffic_hourly[obs_date], 2 ) > 5 ) ),
+    [Road-Hours]
+)
+// fmt: 0%   (harus 100% pada data saat ini)

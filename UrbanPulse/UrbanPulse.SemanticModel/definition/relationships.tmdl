@@ -1,0 +1,19 @@
+relationship 923f1a5e-cb3d-44f8-8d68-2b25a5fb6d26
+	fromColumn: fact_traffic_hourly.location_id
+	toColumn: dim_location.location_id
+
+relationship 6a15ecd0-7e90-499e-a855-254c4ea011ba
+	fromColumn: fact_traffic_30min.location_id
+	toColumn: dim_location.location_id
+
+relationship 3790832c-241c-4add-8c5e-f4227a8ddbb2
+	fromColumn: fact_traffic_hourly.hour_ts
+	toColumn: dim_hour.hour_ts
+
+relationship b902506c-d815-4114-9570-1577603d34ae
+	fromColumn: fact_traffic_30min.hour_ts
+	toColumn: dim_hour.hour_ts
+
+relationship 9be1c257-c8dd-4ba3-a9d8-a9d971232ab8
+	fromColumn: fact_weather_hourly.hour_ts
+	toColumn: dim_hour.hour_ts

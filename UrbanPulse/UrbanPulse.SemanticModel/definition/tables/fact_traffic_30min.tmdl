@@ -1,0 +1,199 @@
+table fact_traffic_30min
+	lineageTag: 13d7ee9d-7d18-4576-a421-9113697b1230
+
+	column location_id
+		dataType: string
+		lineageTag: 4dc68719-f3dd-42a8-9374-9d9822926c9c
+		summarizeBy: none
+		sourceColumn: location_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column frc
+		dataType: string
+		lineageTag: 336a0cc8-49b7-4db3-a7f9-eba0aaa3fd10
+		summarizeBy: none
+		sourceColumn: frc
+
+		annotation SummarizationSetBy = Automatic
+
+	column slot
+		dataType: dateTime
+		formatString: dd mmm yyyy HH:mm
+		lineageTag: aa667961-f0dc-45d6-9dab-9a82acf177c0
+		summarizeBy: none
+		sourceColumn: slot
+
+		annotation UnderlyingDateTimeDataType = DateTime
+
+	column hour_ts
+		dataType: dateTime
+		formatString: dd mmm yyyy HH:mm
+		lineageTag: 501c3a41-6e72-4a9c-9d19-6f0494741ea8
+		summarizeBy: none
+		sourceColumn: hour_ts
+
+		annotation UnderlyingDateTimeDataType = DateTime
+
+	column date
+		dataType: dateTime
+		formatString: dd mmm yyyy
+		lineageTag: b50cd296-0095-42a2-82c5-66dbcd3f97b5
+		summarizeBy: none
+		sourceColumn: date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column hour_of_day
+		dataType: int64
+		lineageTag: 4b7ac689-dd82-4b3b-8e05-2d41ad6c6a9a
+		summarizeBy: none
+		sourceColumn: hour_of_day
+
+		annotation SummarizationSetBy = Automatic
+
+	column minute
+		dataType: int64
+		lineageTag: fa8d7c95-d1dd-492a-8abe-d97eba4f7c72
+		summarizeBy: none
+		sourceColumn: minute
+
+		annotation SummarizationSetBy = Automatic
+
+	column current_speed
+		dataType: double
+		lineageTag: 2fb4d959-a14f-4142-8e06-a760d3e518e8
+		summarizeBy: none
+		sourceColumn: current_speed
+
+		annotation SummarizationSetBy = Automatic
+
+	column free_flow_speed
+		dataType: double
+		lineageTag: 76662afd-4f06-4d9a-a6e3-7770f64092e0
+		summarizeBy: none
+		sourceColumn: free_flow_speed
+
+		annotation SummarizationSetBy = Automatic
+
+	column current_travel_time
+		dataType: double
+		lineageTag: d635363b-8a41-4d5e-b94e-661420e9fbdd
+		summarizeBy: none
+		sourceColumn: current_travel_time
+
+		annotation SummarizationSetBy = Automatic
+
+	column free_flow_travel_time
+		dataType: double
+		lineageTag: c6af856d-d53d-42c2-b0bf-04a78540882d
+		summarizeBy: none
+		sourceColumn: free_flow_travel_time
+
+		annotation SummarizationSetBy = Automatic
+
+	column congestion_ratio
+		dataType: double
+		lineageTag: 31cf38ad-5f4b-4676-98b8-db1b3e144be6
+		summarizeBy: none
+		sourceColumn: congestion_ratio
+
+		annotation SummarizationSetBy = Automatic
+
+	column speed_z
+		dataType: double
+		lineageTag: 637df991-3a6f-4e49-bfc3-894300bfdc88
+		summarizeBy: none
+		sourceColumn: speed_z
+
+		annotation SummarizationSetBy = Automatic
+
+	column speed_anomaly
+		dataType: int64
+		lineageTag: 02d4ecb9-24b5-41eb-be1d-da78e3f55ba1
+		summarizeBy: none
+		sourceColumn: speed_anomaly
+
+		annotation SummarizationSetBy = Automatic
+
+	column cong_z
+		dataType: double
+		lineageTag: 45c3e8db-0e2f-4cb8-9543-7e7858d33c88
+		summarizeBy: none
+		sourceColumn: cong_z
+
+		annotation SummarizationSetBy = Automatic
+
+	column cong_iqr_upper
+		dataType: double
+		lineageTag: c1bf5eb0-2524-4a11-8407-4284fbd5d9aa
+		summarizeBy: none
+		sourceColumn: cong_iqr_upper
+
+		annotation SummarizationSetBy = Automatic
+
+	column cong_anom_z
+		dataType: int64
+		lineageTag: 2a7ae5f4-fc06-4d96-b41a-76c68cf13537
+		summarizeBy: none
+		sourceColumn: cong_anom_z
+
+		annotation SummarizationSetBy = Automatic
+
+	column cong_anom_iqr
+		dataType: int64
+		lineageTag: 2abcd32b-55d3-4ebd-a935-60084018287c
+		summarizeBy: none
+		sourceColumn: cong_anom_iqr
+
+		annotation SummarizationSetBy = Automatic
+
+	column cong_spike
+		dataType: int64
+		lineageTag: 0bdd73c0-b5b4-4a3a-ab78-22c31918da20
+		summarizeBy: none
+		sourceColumn: cong_spike
+
+		annotation SummarizationSetBy = Automatic
+
+	column cong_status
+		dataType: string
+		lineageTag: f3bf7836-359a-459d-8095-0e5b0f8ffed6
+		summarizeBy: none
+		sourceColumn: cong_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column ingestion_mode
+		dataType: string
+		lineageTag: a7fa4c27-94db-4a07-b48f-19927a7fc8f5
+		summarizeBy: none
+		sourceColumn: ingestion_mode
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_traffic_30min = m
+		mode: import
+		source =
+				let
+				    Source   = Csv.Document(File.Contents(DataFolder & "silver_traffic_enriched.csv"),
+				                            [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Selected = Table.SelectColumns(Promoted,
+				                   {"location_id", "frc", "slot", "hour_ts", "date", "hour_of_day", "minute",
+				                    "current_speed", "free_flow_speed", "current_travel_time", "free_flow_travel_time",
+				                    "congestion_ratio", "speed_z", "speed_anomaly", "cong_z", "cong_iqr_upper",
+				                    "cong_anom_z", "cong_anom_iqr", "cong_spike", "cong_status", "ingestion_mode"}),
+				    Typed    = Table.TransformColumnTypes(Selected,
+				                   {{"location_id", type text}, {"frc", type text}, {"slot", type datetime}, {"hour_ts", type datetime},
+				                    {"date", type date}, {"hour_of_day", Int64.Type}, {"minute", Int64.Type},
+				                    {"current_speed", type number}, {"free_flow_speed", type number},
+				                    {"current_travel_time", type number}, {"free_flow_travel_time", type number},
+				                    {"congestion_ratio", type number}, {"speed_z", type number}, {"speed_anomaly", Int64.Type},
+				                    {"cong_z", type number}, {"cong_iqr_upper", type number},
+				                    {"cong_anom_z", Int64.Type}, {"cong_anom_iqr", Int64.Type}, {"cong_spike", Int64.Type},
+				                    {"cong_status", type text}, {"ingestion_mode", type text}}, "en-US")
+				in
+				    Typed
+
+	annotation PBI_ResultType = Table

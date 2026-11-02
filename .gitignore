@@ -1,0 +1,43 @@
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+venv/
+.venv/
+
+# Airflow logs
+airflow_logs/
+
+# Data - raw & generated (tidak di-commit, terlalu besar)
+data/bronze/
+data/logs/
+data/locks/
+data/silver_*.csv
+data/gold_*.csv
+data/raw.csv
+
+# Exports (generated)
+exports/
+
+# Streamlit data (duplikat dari data/)
+urbanpulse_streamlit/data/
+
+# PowerBI data (duplikat dari data/)
+urbanpulse_powerbi/data/
+UrbanPulse/data/
+
+# Logs
+*.log
+*.jsonl
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db

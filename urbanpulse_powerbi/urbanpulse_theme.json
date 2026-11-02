@@ -1,0 +1,46 @@
+{
+  "name": "UrbanPulse",
+  "dataColors": [
+    "#2563EB",
+    "#E4572E",
+    "#17A398",
+    "#F2A900",
+    "#8E44AD",
+    "#D6336C",
+    "#4C9F38",
+    "#00A6D6",
+    "#A0522D",
+    "#6C757D"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#1C2430",
+  "tableAccent": "#2563EB",
+  "good": "#17A398",
+  "neutral": "#F2A900",
+  "bad": "#E4572E",
+  "maximum": "#7F0000",
+  "center": "#FDBB84",
+  "minimum": "#FFF7E6",
+  "textClasses": {
+    "callout": {
+      "fontSize": 28,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#1C2430"
+    },
+    "title": {
+      "fontSize": 13,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#1C2430"
+    },
+    "header": {
+      "fontSize": 12,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#5D6978"
+    },
+    "label": {
+      "fontSize": 10,
+      "fontFace": "Segoe UI",
+      "color": "#5D6978"
+    }
+  }
+}

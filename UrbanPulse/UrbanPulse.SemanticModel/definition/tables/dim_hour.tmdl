@@ -1,0 +1,48 @@
+table dim_hour
+	lineageTag: cbc4c70e-98da-4e0e-8cb6-8380e288027f
+
+	column hour_ts
+		dataType: dateTime
+		formatString: dd mmm yyyy HH:mm
+		lineageTag: b14c0e9e-0cc2-41e3-9a0f-b062c0af056d
+		summarizeBy: none
+		sourceColumn: hour_ts
+
+		annotation UnderlyingDateTimeDataType = DateTime
+
+	column date
+		dataType: dateTime
+		formatString: dd mmm yyyy
+		lineageTag: 50548419-68a7-4bac-8fa5-81dadd2f9f0f
+		summarizeBy: none
+		sourceColumn: date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column hour_of_day
+		dataType: int64
+		lineageTag: d82b3842-b999-4cf7-a8ba-baaa72903250
+		summarizeBy: none
+		sourceColumn: hour_of_day
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_hour = m
+		mode: import
+		source =
+				let
+				    Source   = Csv.Document(File.Contents(DataFolder & "silver_weather_hourly.csv"),
+				                            [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    AddTs    = Table.AddColumn(Promoted, "hour_ts_wib",
+				                   each DateTime.FromText(Text.Start([hour_ts], 19), [Format = "yyyy-MM-dd HH:mm:ss", Culture = "en-US"]),
+				                   type datetime),
+				    Hours    = Table.Distinct(Table.SelectColumns(AddTs, {"hour_ts_wib"})),
+				    Renamed  = Table.RenameColumns(Hours, {{"hour_ts_wib", "hour_ts"}}),
+				    AddDate  = Table.AddColumn(Renamed, "date", each DateTime.Date([hour_ts]), type date),
+				    AddHour  = Table.AddColumn(AddDate, "hour_of_day", each Time.Hour(DateTime.Time([hour_ts])), Int64.Type),
+				    Sorted   = Table.Sort(AddHour, {{"hour_ts", Order.Ascending}})
+				in
+				    Sorted
+
+	annotation PBI_ResultType = Table

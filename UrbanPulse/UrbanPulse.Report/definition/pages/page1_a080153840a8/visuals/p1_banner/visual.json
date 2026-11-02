@@ -1,0 +1,39 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "p1_banner",
+  "position": {
+    "x": 10,
+    "y": 76,
+    "z": 4,
+    "height": 44,
+    "width": 1260,
+    "tabOrder": 4
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Batasan data: ",
+                    "textStyle": {
+                      "fontWeight": "bold"
+                    }
+                  },
+                  {
+                    "value": "traffic hanya mencakup ±20 jam, seluruhnya akhir pekan, dan tidak ada hujan pada periode traffic. Pola jam bersifat deskriptif (tiap jam hanya muncul sekali); perbandingan hari kerja vs akhir pekan dan cuaca vs kecepatan belum dapat dianalisis."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

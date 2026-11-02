@@ -1,0 +1,116 @@
+table fact_weather_hourly
+	lineageTag: e7b50ec8-60e7-4dea-99f3-8d04e8ce788b
+
+	column hour_ts
+		dataType: dateTime
+		formatString: dd mmm yyyy HH:mm
+		lineageTag: 07fd2597-8625-493a-ad45-43aad0254b9c
+		summarizeBy: none
+		sourceColumn: hour_ts
+
+		annotation UnderlyingDateTimeDataType = DateTime
+
+	column temperature
+		dataType: double
+		lineageTag: e148cd6f-d4b5-4c90-9c44-83c27663ce3e
+		summarizeBy: none
+		sourceColumn: temperature
+
+		annotation SummarizationSetBy = Automatic
+
+	column humidity
+		dataType: double
+		lineageTag: 2901d616-41a6-42ea-a722-1b452741e4f7
+		summarizeBy: none
+		sourceColumn: humidity
+
+		annotation SummarizationSetBy = Automatic
+
+	column wind_speed
+		dataType: double
+		lineageTag: c3bc205c-d9ca-41e7-b6b9-358933394bd3
+		summarizeBy: none
+		sourceColumn: wind_speed
+
+		annotation SummarizationSetBy = Automatic
+
+	column cloud_cover
+		dataType: double
+		lineageTag: 77593c32-5de4-4f9c-a6cd-06cbdf8aed30
+		summarizeBy: none
+		sourceColumn: cloud_cover
+
+		annotation SummarizationSetBy = Automatic
+
+	column precip_max
+		dataType: double
+		lineageTag: 89392c2e-e8f3-469e-beee-ec4b091aff64
+		summarizeBy: none
+		sourceColumn: precip_max
+
+		annotation SummarizationSetBy = Automatic
+
+	column live_rows
+		dataType: int64
+		lineageTag: f183f449-ae5c-436f-89bf-c2fb90b244ac
+		summarizeBy: none
+		sourceColumn: live_rows
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_rain
+		dataType: int64
+		lineageTag: bc0f2783-d9cc-469c-8ba2-0e9d1cfa95f4
+		summarizeBy: none
+		sourceColumn: is_rain
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_live
+		dataType: int64
+		lineageTag: 5e9ea5c7-f1ec-4aa3-83dd-49541d613aa4
+		summarizeBy: none
+		sourceColumn: is_live
+
+		annotation SummarizationSetBy = Automatic
+
+	column date
+		dataType: dateTime
+		formatString: dd mmm yyyy
+		lineageTag: c369cc47-943b-4ca4-9c1b-1e80b849f22b
+		summarizeBy: none
+		sourceColumn: date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	partition fact_weather_hourly = m
+		mode: import
+		source =
+				let
+				    Source   = Csv.Document(File.Contents(DataFolder & "silver_weather_hourly.csv"),
+				                            [Delimiter = ",", Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    AddTs    = Table.AddColumn(Promoted, "hour_ts_wib",
+				                   each DateTime.FromText(Text.Start([hour_ts], 19), [Format = "yyyy-MM-dd HH:mm:ss", Culture = "en-US"]),
+				                   type datetime),
+				    Selected = Table.SelectColumns(AddTs,
+				                   {"hour_ts_wib", "temperature", "humidity", "precipitation", "wind_speed", "cloud_cover", "ingestion_mode"}),
+				    Typed    = Table.TransformColumnTypes(Selected,
+				                   {{"temperature", type number}, {"humidity", type number}, {"precipitation", type number},
+				                    {"wind_speed", type number}, {"cloud_cover", type number}, {"ingestion_mode", type text}}, "en-US"),
+				    Grouped  = Table.Group(Typed, {"hour_ts_wib"},
+				                   {{"temperature", each List.Average([temperature]), type number},
+				                    {"humidity", each List.Average([humidity]), type number},
+				                    {"wind_speed", each List.Average([wind_speed]), type number},
+				                    {"cloud_cover", each List.Average([cloud_cover]), type number},
+				                    {"precip_max", each List.Max([precipitation]), type number},
+				                    {"live_rows", each List.Count(List.Select([ingestion_mode], each _ = "live")), Int64.Type}}),
+				    Renamed  = Table.RenameColumns(Grouped, {{"hour_ts_wib", "hour_ts"}}),
+				    AddRain  = Table.AddColumn(Renamed, "is_rain", each if [precip_max] > 0 then 1 else 0, Int64.Type),
+				    AddLive  = Table.AddColumn(AddRain, "is_live", each if [live_rows] > 0 then 1 else 0, Int64.Type),
+				    AddDate  = Table.AddColumn(AddLive, "date", each DateTime.Date([hour_ts]), type date),
+				    Sorted   = Table.Sort(AddDate, {{"hour_ts", Order.Ascending}})
+				in
+				    Sorted
+
+	annotation PBI_ResultType = Table
